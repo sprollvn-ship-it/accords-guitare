@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Explorateur d'Accords | Melv_Guitar</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap');
+
+  :root {
+    --bg: #080810;
+    --panel: #0f0f1a;
+    --border: #2a1f4a;
+    --purple: #8b2fff;
+    --glow: #bf7fff;
+    --accent: #ff3cac;
+    --text: #e8e0ff;
+    --muted: #6b5f8a;
+    --root-color: #ff3cac;
+    --note-color: #8b2fff;
+    --fret-color: #3a2d5a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 15% 20%, rgba(139,47,255,0.1) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 50% at 85% 80%, rgba(106,15,212,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+  }
+
+  header { text-align: center; margin-bottom: 28px; }
+  .brand { font-family: 'Orbitron', monospace; font-size: 10px; letter-spacing: 6px; color: var(--muted); margin-bottom: 8px; }
+  h1 {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(20px, 4vw, 32px);
+    font-weight: 900;
+    background: linear-gradient(135deg, #bf7fff 0%, #ff3cac 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 6px;
+  }
+  .subtitle { font-size: 13px; color: var(--muted); font-weight: 300; }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+    align-items: center;
+  }
+
+  .control-group {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .ctrl-label { font-family: 'Orbitron', monospace; font-size: 9px; letter-spacing: 3px; color: var(--muted); white-space: nowrap; }
+  .btn-group { display: flex; flex-wrap: wrap; gap: 4px; }
+
+  .small-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 4px 9px;
+    cursor: pointer;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+  .small-btn:hover { color: var(--text); border-color: var(--muted); }
+  .small-btn.active { background: var(--purple); border-color: var(--purple); color: white; box-shadow: 0 0 8px rgba(139,47,255,0.4); }
+
+  .mode-toggle {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 3px;
+    display: flex;
+    gap: 2px;
+  }
+  .mode-btn {
+    border: none;
+    border-radius: 7px;
+    padding: 6px 16px;
+    cursor: pointer;
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+    color: var(--muted);
+    background: transparent;
+  }
+  .mode-btn.active { background: var(--purple); color: white; box-shadow: 0 0 10px rgba(139,47,255,0.4); }
+  .mode-btn.minor.active { background: var(--accent); box-shadow: 0 0 10px rgba(255,60,172,0.4); }
+
+  .style-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 12px;
+    cursor: pointer;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .style-btn:hover { color: var(--text); border-color: var(--muted); }
+  .style-btn.active { color: white; }
+
+  .variant-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 12px;
+  }
+  .var-tab {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .var-tab:hover { color: var(--text); border-color: var(--muted); }
+  .var-tab.active { background: var(--purple); border-color: var(--purple); color: white; box-shadow: 0 0 8px rgba(139,47,255,0.4); }
+
+  .fretboard-section {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 16px 32px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+  }
+
+  .fretboard-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .chord-name-big {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(18px, 3vw, 28px);
+    font-weight: 900;
+    background: linear-gradient(135deg, #bf7fff, #ff3cac);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .chord-desc-tag {
+    font-size: 12px;
+    color: var(--accent);
+    background: rgba(255,60,172,0.1);
+    border: 1px solid rgba(255,60,172,0.3);
+    border-radius: 20px;
+    padding: 3px 10px;
+  }
+
+  .fretboard-wrapper { min-width: 540px; position: relative; }
+  .above-fretboard { position: relative; min-width: 540px; height: 18px; margin-bottom: 4px; }
+
+  .fretboard {
+    position: relative;
+    height: 156px;
+    background: linear-gradient(180deg, #1a1020 0%, #120d1a 100%);
+    border-radius: 6px;
+    border: 2px solid #2a1f3a;
+  }
+
+  .nut { position: absolute; left: 44px; top: 0; bottom: 0; width: 5px; background: linear-gradient(180deg, #d4c4a0, #a08060); border-radius: 2px; z-index: 3; }
+  .fret-line { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--fret-color); z-index: 2; }
+  .fret-dot { position: absolute; width: 7px; height: 7px; background: var(--fret-color); border-radius: 50%; transform: translate(-50%, -50%); z-index: 1; }
+  .string-line { position: absolute; left: 0; right: 0; z-index: 2; }
+  .string-label { position: absolute; left: 6px; transform: translateY(-50%); font-size: 10px; font-weight: 600; color: var(--muted); font-family: 'Rajdhani', sans-serif; z-index: 5; }
+  .fret-number { position: absolute; bottom: -22px; transform: translateX(-50%); font-size: 10px; color: var(--muted); font-family: 'Rajdhani', sans-serif; }
+
+  .chord-zone {
+    position: absolute; top: 0; bottom: 0;
+    background: rgba(139,47,255,0.06);
+    border-left: 1px dashed rgba(139,47,255,0.3);
+    border-right: 1px dashed rgba(139,47,255,0.3);
+    z-index: 1; pointer-events: none;
+  }
+
+  .note-dot {
+    position: absolute;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.25s ease;
+  }
+  .note-dot.root { background: var(--root-color); box-shadow: 0 0 12px rgba(255,60,172,0.8), 0 0 24px rgba(255,60,172,0.3); }
+  .note-dot.interval { background: var(--note-color); box-shadow: 0 0 8px rgba(139,47,255,0.6); }
+  .dot-label { font-size: 8px; font-weight: 700; color: white; font-family: 'Rajdhani', sans-serif; }
+
+  .str-ind {
+    position: absolute;
+    transform: translateX(-50%);
+    font-size: 11px; font-weight: 700;
+    font-family: 'Orbitron', monospace;
+    top: 0;
+  }
+  .str-ind.mute { color: rgba(255,80,80,0.8); }
+  .str-ind.open { color: rgba(57,255,20,0.8); }
+
+  .legend { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+  .legend-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); }
+  .legend-dot { width: 13px; height: 13px; border-radius: 50%; }
+  .legend-dot.r { background: var(--root-color); box-shadow: 0 0 6px rgba(255,60,172,0.6); }
+  .legend-dot.i { background: var(--note-color); box-shadow: 0 0 6px rgba(139,47,255,0.6); }
+
+  .chord-info {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+  }
+
+  .harmony-section {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .harmony-label { font-family: 'Orbitron', monospace; font-size: 9px; letter-spacing: 3px; color: var(--muted); margin-bottom: 14px; }
+  .harmony-scroll {
+    display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px;
+    scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+  }
+  .harmony-scroll::-webkit-scrollbar { height: 4px; }
+  .harmony-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  .h-card {
+    flex-shrink: 0; min-width: 100px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px;
+    cursor: pointer; transition: all 0.2s; text-align: center;
+  }
+  .h-card:hover { border-color: rgba(139,47,255,0.5); background: rgba(139,47,255,0.08); transform: translateY(-2px); }
+  .h-card.current { border-color: var(--purple); box-shadow: 0 0 16px rgba(139,47,255,0.3); cursor: default; }
+  .h-name { font-family: 'Orbitron', monospace; font-size: 15px; font-weight: 900; color: var(--glow); margin-bottom: 3px; }
+  .h-card.current .h-name { color: var(--accent); }
+  .h-role { font-size: 10px; color: var(--muted); }
+  .info-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  .info-title { font-family: 'Orbitron', monospace; font-size: 15px; font-weight: 700; color: var(--glow); }
+  .info-mood { font-size: 12px; color: var(--accent); background: rgba(255,60,172,0.1); border: 1px solid rgba(255,60,172,0.3); border-radius: 20px; padding: 3px 10px; }
+  .frets-row { font-family: 'Orbitron', monospace; font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+  .frets-row span { color: var(--text); }
+  .info-desc { font-size: 13px; color: var(--muted); line-height: 1.6; font-weight: 300; }
+  .style-tip { margin-top: 10px; font-family: 'Orbitron', monospace; font-size: 9px; letter-spacing: 1px; color: var(--muted); }
+  .style-tip span { color: var(--glow); font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0; }
+
+  .harmony-section {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .harmony-label { font-family: 'Orbitron', monospace; font-size: 9px; letter-spacing: 3px; color: var(--muted); margin-bottom: 14px; }
+  .harmony-scroll {
+    display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px;
+    scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+  }
+  .harmony-scroll::-webkit-scrollbar { height: 4px; }
+  .harmony-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .h-card {
+    flex-shrink: 0; width: 110px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .h-card:hover { border-color: rgba(139,47,255,0.5); background: rgba(139,47,255,0.08); transform: translateY(-2px); }
+  .h-card.current { border-color: var(--purple); box-shadow: 0 0 16px rgba(139,47,255,0.3); cursor: default; }
+  .h-name { font-family: 'Orbitron', monospace; font-size: 14px; font-weight: 900; color: var(--glow); margin-bottom: 3px; }
+  .h-card.current .h-name { color: var(--accent); }
+  .h-role { font-size: 10px; color: var(--muted); margin-bottom: 2px; }
+  .h-mood { font-size: 11px; color: var(--text); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="brand">Melv_Guitar — Formation GPS</div>
+    <h1>Explorateur d'Accords</h1>
+    <p class="subtitle">Note · Majeur / Mineur · Style · Variante</p>
+  </header>
+
+  <div class="controls">
+    <div class="control-group">
+      <span class="ctrl-label">NOTE</span>
+      <div class="btn-group" id="noteButtons"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="btnMaj" onclick="setMode('major')">MAJEUR</button>
+      <button class="mode-btn minor" id="btnMin" onclick="setMode('minor')">MINEUR</button>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="variant-tabs" id="variantTabs" style="flex:1;"></div>
+  </div>
+
+  <div class="fretboard-section">
+    <div class="fretboard-header">
+      <span class="chord-name-big" id="chordNameBig">C</span>
+      <span class="chord-desc-tag" id="chordDescTag">Forme ouverte</span>
+    </div>
+    <div class="fretboard-wrapper">
+      <div class="above-fretboard" id="aboveFb"></div>
+      <div class="fretboard" id="fretboard"></div>
+      <div id="fretMarkers" style="position:relative;height:26px;"></div>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot r"></div> Tonique</div>
+      <div class="legend-item"><div class="legend-dot i"></div> Note de l'accord</div>
+      <div class="legend-item"><span style="color:rgba(57,255,20,0.8);font-size:15px;font-weight:700;">○</span><span>Corde à vide</span></div>
+    </div>
+  </div>
+
+  <div class="chord-info" id="chordInfo"></div>
+
+  <div class="harmony-section">
+    <div class="harmony-label">🎵 ACCORDS QUI SONNENT BIEN ENSEMBLE</div>
+    <div class="harmony-scroll" id="harmonyScroll"></div>
+  </div>
+
+</div>
+<script>
+const NOTES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const TUNINGS = [4,9,2,7,11,4]; // E A D G B e
+const STR_NAMES = ['E','A','D','G','B','e'];
+const NUM_FRETS = 12;
+const DOT_FRETS = [3,5,7,9,12];
+
+// ── CHORD DATABASE ──
+// frets: [E(low), A, D, G, B, e(high)] — -1=mute, 0=open
+const CHORDS = {
+  major: {
+    // Règle : 1 seule forme par nom, la plus accessible. Pas de barré au-delà de case 7 sauf si c'est la seule option.
+    C:[
+      {name:'C',     frets:[-1,3,2,0,1,0], desc:'Forme ouverte classique',      mood:'Joyeux & lumineux',  moodColor:'#39ff14'},
+      {name:'C',     frets:[-1,3,5,5,5,3], desc:'Barré case 3 — forme A',       mood:'Joyeux & lumineux',  moodColor:'#39ff14'},
+      {name:'Cmaj7', frets:[-1,3,2,0,0,0], desc:'C majeur 7 — son jazz doux',   mood:'Élégant & jazz',     moodColor:'#00e5ff'},
+      {name:'Csus2', frets:[-1,3,0,0,1,3], desc:'C sus2 — ouvert et aérien',    mood:'Aérien & ouvert',    moodColor:'#bf7fff'},
+      {name:'Cadd9', frets:[-1,3,2,0,3,3], desc:'C add9 — coloré et moderne',   mood:'Coloré & moderne',   moodColor:'#8b2fff'},
+    ],
+    D:[
+      {name:'D',     frets:[-1,-1,0,2,3,2], desc:'Forme ouverte classique',     mood:'Joyeux & lumineux',  moodColor:'#39ff14'},
+      {name:'D',     frets:[-1,5,7,7,7,5],  desc:'Barré case 5 — forme A',      mood:'Joyeux & lumineux',  moodColor:'#39ff14'},
+      {name:'Dmaj7', frets:[-1,-1,0,2,2,2], desc:'D majeur 7 — élégant',        mood:'Élégant & jazz',     moodColor:'#00e5ff'},
+      {name:'Dsus2', frets:[-1,-1,0,2,3,0], desc:'D sus2 — aérien',             mood:'Aérien & ouvert',    moodColor:'#bf7fff'},
+      {name:'Dadd9', frets:[-1,-1,0,4,3,2], desc:'D add9 — riche',              mood:'Coloré & moderne',   moodColor:'#8b2fff'},
+    ],
+    E:[
+      {name:'E',     frets:[0,2,2,1,0,0],   desc:'Forme ouverte classique',     mood:'Joyeux & lumineux',  moodColor:'#39ff14'},
+      {name:'E',     frets:[7,9,9,8,7,7],   desc:'Barré case 7 — forme E',      mood:'Joyeux & lumineux',  moodColor:'#39ff14'},
+      {name:'Emaj7', frets:[0,2,1,1,0,0],   desc:'E majeur 7 — élégant',        mood:'Élégant & jazz',     moodColor:'#00e5ff'},
+      {name:'Esus2', frets:[0,2,2,4,0,0],   desc:'E sus2 — aérien',             mood:'Aérien & ouvert',    moodColor:'#bf7fff'},
+      {name:'Emaj9', frets:[0,2,1,1,0,2],   desc:'E majeur 9 — jazz lumineux',  mood:'Jazz lumineux',      moodColor:'#00e5ff'},
+    ],
+    F:[
+      {name:'F',     frets:[1,3,3,2,1,1],   desc:'Barré case 1 — forme E',      mood:'Joyeux & lumineux',  moodColor:'#39ff14'},
+      {name:'F',     frets:[-1,-1,3,2,1,1], desc:'Mini F — plus accessible',    mood:'Joyeux & lumineux',  moodColor:'#39ff14'},
+      {name:'Fmaj7', frets:[-1,-1,3,2,1,0], desc:'F majeur 7 — doux',           mood:'Élégant & jazz',     moodColor:'#00e5ff'},
+    ],
+    G:[
+      {name:'G',     frets:[3,2,0,0,0,3],   desc:'Forme ouverte 3 doigts',      mood:'Joyeux & lumineux',  moodColor:'#39ff14'},
+      {name:'G',     frets:[3,2,0,0,3,3],   desc:'Forme ouverte 4 doigts',      mood:'Joyeux & lumineux',  moodColor:'#39ff14'},
+      {name:'Gmaj7', frets:[3,2,0,0,0,2],   desc:'G majeur 7 — élégant',        mood:'Élégant & jazz',     moodColor:'#00e5ff'},
+      {name:'Gsus2', frets:[3,0,0,2,3,3],   desc:'G sus2 — ouvert',             mood:'Aérien & ouvert',    moodColor:'#bf7fff'},
+      {name:'Gmaj9', frets:[3,2,0,2,0,2],   desc:'G majeur 9 — jazz lumineux',  mood:'Jazz lumineux',      moodColor:'#00e5ff'},
+    ],
+    A:[
+      {name:'A',     frets:[-1,0,2,2,2,0],  desc:'Forme ouverte classique',     mood:'Joyeux & lumineux',  moodColor:'#39ff14'},
+      {name:'A',     frets:[5,7,7,6,5,5],   desc:'Barré case 5 — forme E',      mood:'Joyeux & lumineux',  moodColor:'#39ff14'},
+      {name:'Amaj7', frets:[-1,0,2,1,2,0],  desc:'A majeur 7 — jazz',           mood:'Élégant & jazz',     moodColor:'#00e5ff'},
+      {name:'Asus2', frets:[-1,0,2,2,0,0],  desc:'A sus2 — ouvert',             mood:'Aérien & ouvert',    moodColor:'#bf7fff'},
+      {name:'Aadd9', frets:[-1,0,2,4,2,0],  desc:'A add9 — moderne',            mood:'Coloré & moderne',   moodColor:'#8b2fff'},
+    ],
+    B:[
+      {name:'B',     frets:[-1,2,4,4,4,2],  desc:'Barré case 2 — forme A',      mood:'Joyeux & lumineux',  moodColor:'#39ff14'},
+      {name:'Bmaj7', frets:[-1,2,4,3,4,2],  desc:'B majeur 7 — riche',          mood:'Élégant & jazz',     moodColor:'#00e5ff'},
+      {name:'Bsus2', frets:[-1,2,4,4,2,2],  desc:'B sus2',                      mood:'Aérien & ouvert',    moodColor:'#bf7fff'},
+    ],
+    'C#':[
+      {name:'C#',    frets:[-1,4,6,6,6,4],  desc:'Barré case 4 — forme A',      mood:'Joyeux & lumineux',  moodColor:'#39ff14'},
+      {name:'C#maj7',frets:[-1,4,6,5,6,4],  desc:'C# majeur 7',                 mood:'Élégant & jazz',     moodColor:'#00e5ff'},
+    ],
+    'D#':[
+      {name:'D#',    frets:[-1,6,8,8,8,6],  desc:'Barré case 6 — forme A',      mood:'Joyeux & lumineux',  moodColor:'#39ff14'},
+      {name:'D#maj7',frets:[-1,6,8,7,8,6],  desc:'D# majeur 7',                 mood:'Élégant & jazz',     moodColor:'#00e5ff'},
+    ],
+    'F#':[
+      {name:'F#',    frets:[2,4,4,3,2,2],   desc:'Barré case 2 — forme E',      mood:'Joyeux & lumineux',  moodColor:'#39ff14'},
+      {name:'F#maj7',frets:[2,4,3,3,2,2],   desc:'F# majeur 7',                 mood:'Élégant & jazz',     moodColor:'#00e5ff'},
+    ],
+    'G#':[
+      {name:'G#',    frets:[4,6,6,5,4,4],   desc:'Barré case 4 — forme E',      mood:'Joyeux & lumineux',  moodColor:'#39ff14'},
+    ],
+    'A#':[
+      {name:'A#',    frets:[-1,1,3,3,3,1],  desc:'Barré case 1 — forme A',      mood:'Joyeux & lumineux',  moodColor:'#39ff14'},
+      {name:'A#maj7',frets:[-1,1,3,2,3,1],  desc:'A# majeur 7',                 mood:'Élégant & jazz',     moodColor:'#00e5ff'},
+    ],
+  },
+
+  minor: {
+    C:[
+      {name:'Cm',    frets:[-1,3,5,5,4,3],  desc:'Barré case 3 — forme Am',     mood:'Mélancolique & sombre',   moodColor:'#8b2fff'},
+      {name:'Cm7',   frets:[-1,3,5,3,4,3],  desc:'C mineur 7 — sombre et jazz', mood:'Doux & jazz',             moodColor:'#00e5ff'},
+    ],
+    D:[
+      {name:'Dm',    frets:[-1,-1,0,2,3,1], desc:'Forme ouverte classique',     mood:'Mélancolique & sombre',   moodColor:'#8b2fff'},
+      {name:'Dm',    frets:[-1,5,7,7,6,5],  desc:'Barré case 5 — forme Am',     mood:'Mélancolique & sombre',   moodColor:'#8b2fff'},
+      {name:'Dm7',   frets:[-1,-1,0,2,1,1], desc:'D mineur 7 — jazz mélancolique', mood:'Doux & jazz',          moodColor:'#00e5ff'},
+    ],
+    E:[
+      {name:'Em',    frets:[0,2,2,0,0,0],   desc:'Forme ouverte — la plus facile', mood:'Mélancolique & sombre',moodColor:'#8b2fff'},
+      {name:'Em7',   frets:[0,2,0,0,0,0],   desc:'Em7 — très accessible',       mood:'Doux & jazz',             moodColor:'#00e5ff'},
+      {name:'Em9',   frets:[0,2,0,0,3,0],   desc:'Em9 — flamenco et bossa',     mood:'Mystérieux & flamenco',   moodColor:'#ff6b35'},
+    ],
+    F:[
+      {name:'Fm',    frets:[1,3,3,1,1,1],   desc:'Barré case 1 — forme Em',     mood:'Mélancolique & sombre',   moodColor:'#8b2fff'},
+      {name:'Fm7',   frets:[1,3,1,1,1,1],   desc:'F mineur 7 — sombre',         mood:'Doux & jazz',             moodColor:'#00e5ff'},
+    ],
+    G:[
+      {name:'Gm',    frets:[3,5,5,3,3,3],   desc:'Barré case 3 — forme Em',     mood:'Mélancolique & sombre',   moodColor:'#8b2fff'},
+      {name:'Gm7',   frets:[3,5,3,3,3,3],   desc:'G mineur 7 — soul et jazz',   mood:'Doux & jazz',             moodColor:'#00e5ff'},
+    ],
+    A:[
+      {name:'Am',    frets:[-1,0,2,2,1,0],  desc:'Forme ouverte — incontournable', mood:'Mélancolique & sombre',moodColor:'#8b2fff'},
+      {name:'Am7',   frets:[-1,0,2,0,1,0],  desc:'A mineur 7 — mélancolique',   mood:'Doux & jazz',             moodColor:'#00e5ff'},
+      {name:'Am9',   frets:[-1,0,2,0,1,3],  desc:'Am9 — flamenco, bossa et jazz', mood:'Mystérieux & flamenco',moodColor:'#ff6b35'},
+    ],
+    B:[
+      {name:'Bm',    frets:[-1,2,4,4,3,2],  desc:'Barré case 2 — forme Am',     mood:'Mélancolique & sombre',   moodColor:'#8b2fff'},
+      {name:'Bm7',   frets:[-1,2,4,2,3,2],  desc:'B mineur 7 — jazz',           mood:'Doux & jazz',             moodColor:'#00e5ff'},
+    ],
+    'C#':[
+      {name:'C#m',   frets:[-1,4,6,6,5,4],  desc:'Barré case 4 — forme Am',     mood:'Mélancolique & sombre',   moodColor:'#8b2fff'},
+      {name:'C#m7',  frets:[-1,4,6,4,5,4],  desc:'C# mineur 7',                 mood:'Doux & jazz',             moodColor:'#00e5ff'},
+    ],
+    'D#':[
+      {name:'D#m',   frets:[-1,6,8,8,7,6],  desc:'Barré case 6 — forme Am',     mood:'Mélancolique & sombre',   moodColor:'#8b2fff'},
+      {name:'D#m7',  frets:[-1,6,8,6,7,6],  desc:'D# mineur 7',                 mood:'Doux & jazz',             moodColor:'#00e5ff'},
+    ],
+    'F#':[
+      {name:'F#m',   frets:[2,4,4,2,2,2],   desc:'Barré case 2 — forme Em',     mood:'Mélancolique & sombre',   moodColor:'#8b2fff'},
+      {name:'F#m7',  frets:[2,4,2,2,2,2],   desc:'F# mineur 7',                 mood:'Doux & jazz',             moodColor:'#00e5ff'},
+    ],
+    'G#':[
+      {name:'G#m',   frets:[4,6,6,4,4,4],   desc:'Barré case 4 — forme Em',     mood:'Mélancolique & sombre',   moodColor:'#8b2fff'},
+      {name:'G#m7',  frets:[4,6,4,4,4,4],   desc:'G# mineur 7',                 mood:'Doux & jazz',             moodColor:'#00e5ff'},
+    ],
+    'A#':[
+      {name:'A#m',   frets:[-1,1,3,3,2,1],  desc:'Barré case 1 — forme Am',     mood:'Mélancolique & sombre',   moodColor:'#8b2fff'},
+      {name:'A#m7',  frets:[6,8,6,6,6,6],   desc:'A# mineur 7',                 mood:'Doux & jazz',             moodColor:'#00e5ff'},
+    ],
+  }
+};
+
+let selNote = 'A';
+let selMode = 'minor';
+let selVarIdx = 0;
+
+function getChords() { return CHORDS[selMode][selNote] || []; }
+function getCurrentChord() { const c = getChords(); return c[Math.min(selVarIdx, c.length-1)] || null; }
+
+function setMode(m) {
+  selMode = m; selVarIdx = 0;
+  document.getElementById('btnMaj').classList.toggle('active', m==='major');
+  document.getElementById('btnMin').classList.toggle('active', m==='minor');
+  renderVariantTabs(); renderAll();
+}
+
+function selectNote(n) { selNote = n; selVarIdx = 0; renderNoteButtons(); renderVariantTabs(); renderAll(); }
+function selectVariant(i) { selVarIdx = i; renderVariantTabs(); renderAll(); }
+
+function renderNoteButtons() {
+  document.getElementById('noteButtons').innerHTML = NOTES.map(n=>
+    `<button class="small-btn ${n===selNote?'active':''}" onclick="selectNote('${n}')">${n}</button>`
+  ).join('');
+}
+
+function renderVariantTabs() {
+  const chords = getChords();
+  document.getElementById('variantTabs').innerHTML = chords.length
+    ? chords.map((c,i)=>`<button class="var-tab ${i===selVarIdx?'active':''}" onclick="selectVariant(${i})">${c.name}</button>`).join('')
+    : `<span style="color:var(--muted);font-size:12px;">Aucune variante disponible</span>`;
+}
+
+function renderFretboard() {
+  const fb = document.getElementById('fretboard');
+  const markDiv = document.getElementById('fretMarkers');
+  const aboveDiv = document.getElementById('aboveFb');
+  fb.innerHTML=''; markDiv.innerHTML=''; aboveDiv.innerHTML='';
+
+  const chord = getCurrentChord();
+  if (!chord) return;
+
+  const w = fb.offsetWidth || 660;
+  const nutX = 44;
+  const playW = w - nutX - 10;
+  const fretSp = playW / NUM_FRETS;
+  const strSp = 116/5;
+  const strTop = 18;
+
+  // window
+  const played = chord.frets.filter(f=>f>0);
+  const minF = played.length ? Math.min(...played) : 0;
+  const maxF = played.length ? Math.max(...played) : 4;
+  const winS = Math.max(0, minF-1);
+  const winE = Math.max(winS+4, maxF);
+
+  if (winS > 0) {
+    const zone = document.createElement('div');
+    zone.className='chord-zone';
+    zone.style.left=(nutX+winS*fretSp)+'px';
+    zone.style.width=((winE-winS+1)*fretSp)+'px';
+    fb.appendChild(zone);
+  }
+
+  const nut = document.createElement('div'); nut.className='nut'; fb.appendChild(nut);
+
+  for (let f=1; f<=NUM_FRETS; f++) {
+    const x = nutX+f*fretSp;
+    const fl=document.createElement('div'); fl.className='fret-line'; fl.style.left=x+'px'; fb.appendChild(fl);
+    const fm=document.createElement('div'); fm.className='fret-number';
+    fm.style.left=(nutX+(f-0.5)*fretSp)+'px'; fm.textContent=f; markDiv.appendChild(fm);
+    if (DOT_FRETS.includes(f)) {
+      const dt=document.createElement('div'); dt.className='fret-dot';
+      dt.style.left=(nutX+(f-0.5)*fretSp)+'px'; dt.style.top='50%'; fb.appendChild(dt);
+    }
+  }
+
+  const rootIdx = NOTES.indexOf(selNote);
+
+  for (let s=0; s<6; s++) {
+    const y = strTop+(5-s)*strSp;
+    const thick = 0.8+s*0.25;
+    const fret = chord.frets[s];
+
+    const sl=document.createElement('div'); sl.className='string-line';
+    sl.style.top=y+'px'; sl.style.height=thick+'px';
+    sl.style.background=`rgba(200,168,112,${fret===-1?0.08:0.4+s*0.08})`;
+    fb.appendChild(sl);
+
+    const lab=document.createElement('div'); lab.className='string-label';
+    lab.style.top=y+'px'; lab.textContent=STR_NAMES[s]; fb.appendChild(lab);
+
+    // above indicators — evenly spread
+    const indX = nutX + s*(playW/5);
+    if (fret===-1 || fret===0) {
+      const ind=document.createElement('div');
+      ind.className='str-ind '+(fret===-1?'mute':'open');
+      ind.style.left=indX+'px';
+      ind.textContent=fret===-1?'✕':'○';
+      aboveDiv.appendChild(ind);
+    }
+
+    // Only draw dot for actually fretted notes (fret > 0)
+    // Open strings (fret===0) are shown above with ○ only — no dot on fretboard
+    if (fret<=0) continue;
+
+    const x = nutX+(fret-0.5)*fretSp;
+    const noteAtFret = (TUNINGS[s]+fret)%12;
+    const isRoot = noteAtFret===rootIdx;
+
+    const dot=document.createElement('div');
+    dot.className=`note-dot ${isRoot?'root':'interval'}`;
+    dot.style.left=x+'px'; dot.style.top=y+'px';
+    const lbl=document.createElement('span'); lbl.className='dot-label';
+    lbl.textContent=fret;
+    dot.appendChild(lbl); fb.appendChild(dot);
+  }
+}
+
+function renderChordInfo() {
+  const chord = getCurrentChord();
+  if (!chord) { document.getElementById('chordInfo').innerHTML=''; return; }
+  const fretsDisplay = chord.frets.map(f=>f===-1?'X':f).join(' — ');
+  const moodColor = chord.moodColor || '#8b2fff';
+  document.getElementById('chordInfo').innerHTML=`
+    <div class="info-header">
+      <span class="info-title">${chord.name}</span>
+      ${chord.mood ? `<span class="info-mood" style="color:${moodColor};background:${moodColor}22;border-color:${moodColor}55;">${chord.mood}</span>` : ''}
+    </div>
+    <div class="frets-row">CASES : <span>${fretsDisplay}</span></div>
+    <p class="info-desc">${chord.desc}</p>
+  `;
+}
+
+// Accords qui sonnent bien ensemble par note et mode
+const HARMONY = {
+  major: {
+    C:  [{c:'Am',r:'Relative min.'},{c:'F',r:'Sous-dominante'},{c:'G',r:'Dominante'},{c:'Em',r:'Médiante'},{c:'Dm',r:'Sus-tonique'}],
+    D:  [{c:'Bm',r:'Relative min.'},{c:'G',r:'Sous-dominante'},{c:'A',r:'Dominante'},{c:'F#m',r:'Médiante'},{c:'Em',r:'Sus-tonique'}],
+    E:  [{c:'C#m',r:'Relative min.'},{c:'A',r:'Sous-dominante'},{c:'B',r:'Dominante'},{c:'G#m',r:'Médiante'},{c:'F#m',r:'Sus-tonique'}],
+    F:  [{c:'Dm',r:'Relative min.'},{c:'Bb',r:'Sous-dominante'},{c:'C',r:'Dominante'},{c:'Am',r:'Médiante'},{c:'Gm',r:'Sus-tonique'}],
+    G:  [{c:'Em',r:'Relative min.'},{c:'C',r:'Sous-dominante'},{c:'D',r:'Dominante'},{c:'Bm',r:'Médiante'},{c:'Am',r:'Sus-tonique'}],
+    A:  [{c:'F#m',r:'Relative min.'},{c:'D',r:'Sous-dominante'},{c:'E',r:'Dominante'},{c:'C#m',r:'Médiante'},{c:'Bm',r:'Sus-tonique'}],
+    B:  [{c:'G#m',r:'Relative min.'},{c:'E',r:'Sous-dominante'},{c:'F#',r:'Dominante'},{c:'D#m',r:'Médiante'},{c:'C#m',r:'Sus-tonique'}],
+    'C#':[{c:'A#m',r:'Relative min.'},{c:'F#',r:'Sous-dominante'},{c:'G#',r:'Dominante'},{c:'Fm',r:'Médiante'}],
+    'D#':[{c:'Cm',r:'Relative min.'},{c:'G#',r:'Sous-dominante'},{c:'A#',r:'Dominante'},{c:'Gm',r:'Médiante'}],
+    'F#':[{c:'D#m',r:'Relative min.'},{c:'B',r:'Sous-dominante'},{c:'C#',r:'Dominante'},{c:'A#m',r:'Médiante'}],
+    'G#':[{c:'Fm',r:'Relative min.'},{c:'C#',r:'Sous-dominante'},{c:'D#',r:'Dominante'},{c:'Cm',r:'Médiante'}],
+    'A#':[{c:'Gm',r:'Relative min.'},{c:'D#',r:'Sous-dominante'},{c:'F',r:'Dominante'},{c:'Dm',r:'Médiante'}],
+  },
+  minor: {
+    C:  [{c:'Eb',r:'Relative maj.'},{c:'Fm',r:'Sous-dominante'},{c:'G',r:'Dominante'},{c:'Ab',r:'Sus-médiante'},{c:'Bb',r:'Sus-tonique'}],
+    D:  [{c:'F',r:'Relative maj.'},{c:'Gm',r:'Sous-dominante'},{c:'A',r:'Dominante'},{c:'Bb',r:'Sus-médiante'},{c:'C',r:'Sus-tonique'}],
+    E:  [{c:'G',r:'Relative maj.'},{c:'Am',r:'Sous-dominante'},{c:'B',r:'Dominante'},{c:'C',r:'Sus-médiante'},{c:'D',r:'Sus-tonique'}],
+    F:  [{c:'Ab',r:'Relative maj.'},{c:'Bbm',r:'Sous-dominante'},{c:'C',r:'Dominante'},{c:'Db',r:'Sus-médiante'},{c:'Eb',r:'Sus-tonique'}],
+    G:  [{c:'Bb',r:'Relative maj.'},{c:'Cm',r:'Sous-dominante'},{c:'D',r:'Dominante'},{c:'Eb',r:'Sus-médiante'},{c:'F',r:'Sus-tonique'}],
+    A:  [{c:'C',r:'Relative maj.'},{c:'Dm',r:'Sous-dominante'},{c:'E',r:'Dominante'},{c:'F',r:'Sus-médiante'},{c:'G',r:'Sus-tonique'}],
+    B:  [{c:'D',r:'Relative maj.'},{c:'Em',r:'Sous-dominante'},{c:'F#',r:'Dominante'},{c:'G',r:'Sus-médiante'},{c:'A',r:'Sus-tonique'}],
+    'C#':[{c:'E',r:'Relative maj.'},{c:'F#m',r:'Sous-dominante'},{c:'G#',r:'Dominante'},{c:'A',r:'Sus-médiante'}],
+    'D#':[{c:'F#',r:'Relative maj.'},{c:'G#m',r:'Sous-dominante'},{c:'A#',r:'Dominante'},{c:'B',r:'Sus-médiante'}],
+    'F#':[{c:'A',r:'Relative maj.'},{c:'Bm',r:'Sous-dominante'},{c:'C#',r:'Dominante'},{c:'D',r:'Sus-médiante'}],
+    'G#':[{c:'B',r:'Relative maj.'},{c:'C#m',r:'Sous-dominante'},{c:'D#',r:'Dominante'},{c:'E',r:'Sus-médiante'}],
+    'A#':[{c:'C#',r:'Relative maj.'},{c:'D#m',r:'Sous-dominante'},{c:'F',r:'Dominante'},{c:'F#',r:'Sus-médiante'}],
+  }
+};
+
+function renderHarmony() {
+  const list = (HARMONY[selMode] && HARMONY[selMode][selNote]) || [];
+  const chord = getCurrentChord();
+  const scroll = document.getElementById('harmonyScroll');
+  const items = [
+    {c: chord?.name || selNote, r: 'Accord actuel', current: true},
+    ...list.map(h => ({c: h.c, r: h.r, current: false}))
+  ];
+  scroll.innerHTML = items.map(item => `
+    <div class="h-card ${item.current ? 'current' : ''}" onclick="${!item.current ? `goToChord('${item.c}')` : ''}">
+      <div class="h-name">${item.c}</div>
+      <div class="h-role">${item.r}</div>
+    </div>
+  `).join('');
+}
+
+function goToChord(chordName) {
+  const isMinor = /^[A-G]#?m(?!aj)/.test(chordName);
+  const root = chordName.replace(/m(aj)?[0-9]*/,'').replace(/[0-9].*/,'').replace(/sus.*/,'').replace(/add.*/,'');
+  if (NOTES.includes(root)) {
+    selNote = root;
+    selMode = isMinor ? 'minor' : 'major';
+    selVarIdx = 0;
+    document.getElementById('btnMaj').classList.toggle('active', selMode === 'major');
+    document.getElementById('btnMin').classList.toggle('active', selMode === 'minor');
+    renderNoteButtons(); renderVariantTabs(); renderAll();
+  }
+}
+function renderAll() {
+  const chord = getCurrentChord();
+  document.getElementById('chordNameBig').textContent=chord?.name||selNote;
+  document.getElementById('chordDescTag').textContent=chord?.desc||'';
+  renderFretboard(); renderChordInfo(); renderHarmony();
+}
+
+window.addEventListener('load',()=>{
+  renderNoteButtons(); renderVariantTabs(); renderAll();
+});
+window.addEventListener('resize', renderFretboard);
+</script>
+</body>
+</html>
